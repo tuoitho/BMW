@@ -51,6 +51,8 @@
 
     <!-- Form Thêm Sản phẩm -->
     <form action="/admin/products/save" method="post" enctype="multipart/form-data" onsubmit="return validateForm();">
+        <!-- CSRF Token -->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <!-- Mã sản phẩm -->
         <div class="form-group">
             <label for="productCode">Mã sản phẩm</label>

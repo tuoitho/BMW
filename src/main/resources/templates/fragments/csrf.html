@@ -1,0 +1,9 @@
+<!-- CSRF Protection Fragment for Thymeleaf Templates -->
+<th:block th:fragment="csrf">
+    <!-- CSRF Meta Tags for AJAX Requests -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    
+    <!-- CSRF Protection Script -->
+    <script src="/csrf.js"></script>
+</th:block>

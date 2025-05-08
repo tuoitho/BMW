@@ -25,11 +25,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 
@@ -64,9 +68,7 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return new UserService();
-    }
-
-    @Bean
+    }    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://127.0.0.1:5500"));
@@ -77,8 +79,21 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
-
-    // Configures the security filter chain
+    
+    /**
+     * Bean để thêm hỗ trợ SRI (Subresource Integrity) cho các tài nguyên CDN
+     * - Sử dụng SRI để đảm bảo rằng các tài nguyên không bị thay đổi
+     */
+    @Bean
+    public WebMvcConfigurer webMvcConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                registry.addResourceHandler("/assets/**")
+                        .addResourceLocations("classpath:/static/assets/");
+            }
+        };
+    }// Configures the security filter chain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
@@ -87,7 +102,23 @@ public class SecurityConfig {
                         .maxSessionsPreventsLogin(false) // Không cấm đăng nhập nếu đạt giới hạn
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // Disable CSRF protection
+                // Bật CSRF protection
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // Bật CSRF, nhưng bỏ qua API endpoints
+                // Thêm header bảo mật
+                .headers(headers -> headers
+                    .contentSecurityPolicy(csp -> csp
+                        .policyDirectives("default-src 'self'; " +
+                            "script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://cdnjs.cloudflare.com " +
+                            "https://maxcdn.bootstrapcdn.com https://ajax.googleapis.com https://www.google.com https://www.gstatic.com 'unsafe-inline'; " +
+                            "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com " +
+                            "https://maxcdn.bootstrapcdn.com 'unsafe-inline'; " +
+                            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
+                            "img-src 'self' data: https://via.placeholder.com https://source.unsplash.com; " +
+                            "frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self';"))
+                    .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                    .referrerPolicy(referrer -> referrer
+                        .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                )
                 .authorizeHttpRequests(auth -> auth
 //                        STATIC_RESOURCES
                         .requestMatchers("/assets/**", "/showMsg.js", "/notification.js", "/error", "/error/**", " /login").permitAll()

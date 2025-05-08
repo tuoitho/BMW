@@ -255,9 +255,10 @@
             </div>
             <div class="col-lg-9">
                 <div class="tab-content">
-                    <div id="info-edit" class="tab-pane active">
-                        <h3>Thông tin cá nhân</h3>
+                    <div id="info-edit" class="tab-pane active">                        <h3>Thông tin cá nhân</h3>
                         <form th:action="@{/customer/personal-info/profile}" method="post" enctype="multipart/form-data">
+                            <!-- CSRF Token -->
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <div class="row">
                                 <div class="col-lg-6 single-input-item">
 <!--                                    <label for="profileImage" class="required">Hình ảnh đại diện</label>-->
@@ -335,9 +336,10 @@
                         <button th:onclick="'window.location.href=\'/customer/personal-info/address/new\''" class="btn btn-success mt-3">Thêm địa chỉ mới</button>
                     </div>
 
-                    <div id="change-password" class="tab-pane">
-                        <h3>Đổi mật khẩu</h3>
+                    <div id="change-password" class="tab-pane">                        <h3>Đổi mật khẩu</h3>
                         <form th:action="@{/customer/personal-info/password}" method="post">
+                            <!-- CSRF Token -->
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <div class="row">
                                 <div class="col-lg-6 single-input-item">
                                     <label for="currentPassword" class="required">Mật khẩu hiện tại</label>
